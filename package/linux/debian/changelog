@@ -1,0 +1,5 @@
+osra (2.0.0-1) unstable; urgency=low
+
+  * Initial release (closes: #682760)
+
+ -- Dmitry Katsubo <dma_k@mail.ru>  Mon, 15 Dec 2014 17:05:38 +0200

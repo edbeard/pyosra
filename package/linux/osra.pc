@@ -1,0 +1,10 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+
+Name: osra
+Description: Chemical structure recognition library
+Version: 2.1.0
+
+Requires: gocr ocrad openbabel-2.0 GraphicsMagick++
+Libs: -l${exec_prefix}/lib -lPgm2asc -lGraphicsMagick -lGraphicsMagick++ -lopenbabel -lpoppler-cpp -lpoppler -lfontconfig -lfreetype -lpthread -locrad -lpotrace -lm 
+Cflags: 

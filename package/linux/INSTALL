@@ -1,0 +1,8 @@
+To install run (as a root or via sudo)
+./install.sh
+
+It will copy the contents of "package" into /opt/local/osra
+and the wrap-around shell script "osra" into /usr/local/bin
+
+Starting with version 2.1.0 Ghostscript is no longer necessary
+to process PDF and PS files.
