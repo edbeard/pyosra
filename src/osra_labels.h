@@ -144,6 +144,39 @@ int find_chars(const potrace_path_t * p, const Image &orig, std::vector<letters_
                int width, ColorGray &bgColor, double THRESHOLD, int max_font_width,
                int max_font_height, int &real_font_width, int &real_font_height, bool verbose);
 
+// Function: find_chars_r_group()
+//
+// searches for perspective characters in the image and calls OCR routines, with logic for whitelisting R-group variables
+//
+// Parameters:
+// p - vectorized output of Potrace routines
+// orig - original image
+// letters - vector which will contain recognized characters
+// atom - vector of atoms
+// bond - vector of bonds
+// n_atom - number of atoms
+// n_bond - number of bonds
+// height - image height
+// width - image width
+// bgColor - background color
+// THRESHOLD - black-white binarization threshold
+// max_font_width - maximum font width for the specific resolution in pixels
+// max_font_height - maximum font height for the specific resolution in pixels
+// real_font_width - detected font width
+// real_font_height - detected font height
+// verbose - flag for verbose output
+// rgroup - vector of whitelisted rgroup characters
+//
+// Returns:
+// number of recognized characters
+
+
+int find_chars_rgroup(const potrace_path_t * p, const Image &orig, std::vector<letters_t> &letters,
+                       std::vector<atom_t> &atom, std::vector<bond_t> &bond,
+                       int n_atom, int n_bond, int height, int width, ColorGray &bgColor, double THRESHOLD,
+                       int max_font_width, int max_font_height, int &real_font_width, int &real_font_height,
+                       bool verbose, std::string rgroup);
+
 // Function: find_numbers()
 //
 // searches for numbers 0..9 in the image and calls OCR routines

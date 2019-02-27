@@ -25,7 +25,6 @@
 #include <string> // std::string
 #include <ostream> // std:ostream
 
-
 //
 // Section: Functions
 //
@@ -74,8 +73,10 @@ int osra_process_image(
 int hack_osra_process_image(
   const char *image_data,
   int image_length,
-  const std::string &input_file = "/home/edward/Documents/CSDE_Git/osra_install_pkg/osra-2.1.0-1/src/test.jpg",
-  const std::string &output_file = "/home/edward/Documents/CSDE_Git/osra_install_pkg/osra-2.1.0-1/src/output",
+  std::vector<std::string> rgroup_vars,
+  std::vector<std::string> rgroup_values,
+  const std::string &input_file = "/home/edward/cpp/hack_osra/src/test_rgroup.jpg",
+  const std::string &output_file = "/home/edward/cpp/hack_osra/src/output",
   int rotate = 0,
   bool invert = false,
   int input_resolution = 0,
@@ -99,6 +100,7 @@ int hack_osra_process_image(
   const std::string &output_image_file_prefix = "",
   const std::string &resize = "",
   const std::string &preview = ""
+//  std::vector<std::vector<std::string>> rgroup //= std::vector<std::vector<std::string>>{{"R","CH3"}}
 );
 
 void test_osra_lib(

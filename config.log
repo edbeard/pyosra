@@ -829,8 +829,8 @@ configure:9285: result: yes
 configure:9311: LIBS="-lGraphicsMagick -lGraphicsMagick++ -lopenbabel -lpoppler-cpp -lpoppler -lfontconfig -lfreetype -lpthread -locrad -lpotrace -lm " after linking check succeeded
 configure:9327: checking for library containing pnm_readpnminit
 configure:9358: g++ -std=gnu++11 -o conftest -g -O2 -I/usr/local/include/GraphicsMagick -I/usr/local/include/openbabel-2.0 -I/usr/local/include/gocr -I/usr/local/include/ -I/usr/local/include  -L/usr/local/lib -L/usr/local/lib  conftest.cpp -lGraphicsMagick -lGraphicsMagick++ -lopenbabel -lpoppler-cpp -lpoppler -lfontconfig -lfreetype -lpthread -locrad -lpotrace -lm  >&5
-/tmp/ccniswDX.o: In function `main':
-/home/edward/Documents/CSDE_Git/osra_install_pkg/osra-2.1.0-1/conftest.cpp:53: undefined reference to `pnm_readpnminit'
+/tmp/cc20lAbh.o: In function `main':
+/home/edward/cpp/hack_osra/conftest.cpp:53: undefined reference to `pnm_readpnminit'
 collect2: error: ld returned 1 exit status
 configure:9358: $? = 1
 configure: failed program was:

@@ -997,6 +997,346 @@ int find_chars(const potrace_path_t * p, const Image &orig, std::vector<letters_
   return (n_letters);
 }
 
+int find_chars_rgroup(const potrace_path_t * p, const Image &orig, std::vector<letters_t> &letters,
+               std::vector<atom_t> &atom, std::vector<bond_t> &bond,
+               int n_atom, int n_bond, int height, int width, ColorGray &bgColor, double THRESHOLD,
+               int max_font_width, int max_font_height, int &real_font_width, int &real_font_height,
+               bool verbose, std::string rgroup)
+{
+    int n, *tag, n_letters = 0;
+    potrace_dpoint_t (*c)[3];
+    real_font_width = 0;
+    real_font_height = 0;
+
+    while (p != NULL)
+    {
+        if ((p->sign == int('+')))
+        {
+            n = p->curve.n;
+            tag = p->curve.tag;
+            c = p->curve.c;
+            int top = height;
+            int x1 = 0;
+            int left = width;
+            int y1 = 0;
+            int bottom = 0;
+            int x2 = 0;
+            int right = 0;
+            int y2 = 0;
+            int cx,cy;
+            for (int i = 0; i < n; i++)
+            {
+                switch (tag[i])
+                {
+                    case POTRACE_CORNER:
+                        cx = c[i][1].x;
+                        cy = c[i][1].y;
+                        if (cx<0) cx=0;
+                        if (cx>width) cx=width;
+                        if (cy<0) cy=0;
+                        if (cy>height) cy=height;
+
+                        if (cx < left)
+                        {
+                            left = cx;
+                            y1 = cy;
+                        }
+                        if (cx > right)
+                        {
+                            right = cx;
+                            y2 = cy;
+                        }
+                        if (cy < top)
+                        {
+                            top = cy;
+                            x1 = cx;
+                        }
+                        if (cy > bottom)
+                        {
+                            bottom = cy;
+                            x2 = cx;
+                        }
+                        break;
+                    case POTRACE_CURVETO:
+                        cx = c[i][0].x;
+                        cy = c[i][0].y;
+                        if (cx<0) cx=0;
+                        if (cx>width) cx=width;
+                        if (cy<0) cy=0;
+                        if (cy>height) cy=height;
+                        if (cx < left)
+                        {
+                            left = cx;
+                            y1 = cy;
+                        }
+                        if (cx > right)
+                        {
+                            right = cx;
+                            y2 = cy;
+                        }
+                        if (cy < top)
+                        {
+                            top = cy;
+                            x1 = cx;
+                        }
+                        if (cy > bottom)
+                        {
+                            bottom = cy;
+                            x2 = cx;
+                        }
+                        cx = c[i][1].x;
+                        cy = c[i][1].y;
+                        if (cx<0) cx=0;
+                        if (cx>width) cx=width;
+                        if (cy<0) cy=0;
+                        if (cy>height) cy=height;
+                        if (cx < left)
+                        {
+                            left = cx;
+                            y1 = cy;
+                        }
+                        if (cx > right)
+                        {
+                            right = cx;
+                            y2 = cy;
+                        }
+                        if (cy < top)
+                        {
+                            top = cy;
+                            x1 = cx;
+                        }
+                        if (cy > bottom)
+                        {
+                            bottom = cy;
+                            x2 = cx;
+                        }
+                        break;
+                }
+                cx = c[i][2].x;
+                cy = c[i][2].y;
+                if (cx<0) cx=0;
+                if (cx>width) cx=width;
+                if (cy<0) cy=0;
+                if (cy>height) cy=height;
+                if (cx < left)
+                {
+                    left = cx;
+                    y1 = cy;
+                }
+                if (cx > right)
+                {
+                    right = cx;
+                    y2 = cy;
+                }
+                if (cy < top)
+                {
+                    top = cy;
+                    x1 = cx;
+                }
+                if (cy > bottom)
+                {
+                    bottom = cy;
+                    x2 = cx;
+                }
+            }
+
+            if (((bottom - top) <= 2 * max_font_height) && ((right - left) <= 2 * max_font_width) && (right - left
+                                                                                                      > V_DISPLACEMENT) && (bottom - top > MIN_FONT_HEIGHT))
+            {
+                int s = 1;
+                while ((top > 0) && (s > 0))
+                {
+                    s = 0;
+                    s = get_pixel(orig, bgColor, x1, top, THRESHOLD);
+                    if (s > 0)
+                        top--;
+                }
+                s = 1;
+                while ((bottom < height) && (s > 0))
+                {
+                    s = 0;
+                    s = get_pixel(orig, bgColor, x2, bottom, THRESHOLD);
+                    if (s > 0)
+                        bottom++;
+                }
+                s = 1;
+                while ((left > 0) && (s > 0))
+                {
+                    s = 0;
+                    s = get_pixel(orig, bgColor, left, y1, THRESHOLD);
+                    if (s > 0)
+                        left--;
+                }
+                s = 1;
+                while ((right < width) && (s > 0))
+                {
+                    s = 0;
+                    s = get_pixel(orig, bgColor, right, y2, THRESHOLD);
+                    if (s > 0)
+                        right++;
+                }
+            }
+
+            bool found = false;
+            if (((bottom - top) <= max_font_height) && ((right - left) <= max_font_width) && (right - left
+                                                                                              > V_DISPLACEMENT) && (bottom - top > MIN_FONT_HEIGHT))
+            {
+
+                char label = 0;
+                label = get_atom_label_rgroup(orig, bgColor, left, top, right, bottom, THRESHOLD, (right + left) / 2, top, false, verbose, rgroup);
+
+                if (label != 0)
+                {
+                    letters_t lt;
+                    letters.push_back(lt);
+                    letters[n_letters].a = label;
+                    letters[n_letters].x = (left + right) / 2;
+                    letters[n_letters].y = (top + bottom) / 2;
+                    letters[n_letters].r = distance(left, top, right, bottom) / 2;
+                    letters[n_letters].min_x = left;
+                    letters[n_letters].max_x = right;
+                    letters[n_letters].min_y = top;
+                    letters[n_letters].max_y = bottom;
+                    letters[n_letters].curve = p;
+                    if (right - left > real_font_width)
+                        real_font_width = right - left;
+                    if (bottom - top > real_font_height)
+                        real_font_height = bottom - top;
+                    letters[n_letters].free = true;
+                    n_letters++;
+                    if (n_letters >= MAX_ATOMS)
+                        n_letters--;
+                    delete_bonds_in_char(bond, n_bond, atom, left, top, right, bottom);
+                    delete_curve_with_children(atom, bond, n_atom, n_bond, p);
+                    found = true;
+                }
+            }
+            if (((bottom - top) <= 2 * max_font_height) && ((right - left) <= max_font_width) && (right - left
+                                                                                                  > V_DISPLACEMENT) && (bottom - top > MIN_FONT_HEIGHT) && !found)
+            {
+
+                char label1 = 0;
+                int newtop = (top + bottom) / 2;
+                label1 = get_atom_label_rgroup(orig, bgColor, left, newtop, right, bottom, THRESHOLD, (right + left) / 2,
+                                        newtop, false, verbose, rgroup);
+                char label2 = 0;
+                int newbottom = (top + bottom) / 2;
+                label2 = get_atom_label_rgroup(orig, bgColor, left, top, right, newbottom, THRESHOLD, (right + left) / 2, top, false, verbose, rgroup);
+                if (label1 != 0 && label2 != 0 && !(tolower(label1) == 's' && tolower(label2) =='s'))
+                {
+                    //cout << label1 << label2 << endl;
+                    letters_t lt1;
+                    letters.push_back(lt1);
+                    letters[n_letters].a = label1;
+                    letters[n_letters].x = (left + right) / 2;
+                    letters[n_letters].y = (newtop + bottom) / 2;
+                    letters[n_letters].r = distance(left, newtop, right, bottom) / 2;
+                    letters[n_letters].min_x = left;
+                    letters[n_letters].max_x = right;
+                    letters[n_letters].min_y = newtop;
+                    letters[n_letters].max_y = bottom;
+                    letters[n_letters].curve = p;
+                    if (right - left > real_font_width)
+                        real_font_width = right - left;
+                    if (bottom - newtop > real_font_height)
+                        real_font_height = bottom - newtop;
+                    letters[n_letters].free = true;
+                    n_letters++;
+                    if (n_letters >= MAX_ATOMS)
+                        n_letters--;
+                    letters_t lt2;
+                    letters.push_back(lt2);
+                    letters[n_letters].a = label2;
+                    letters[n_letters].x = (left + right) / 2;
+                    letters[n_letters].y = (top + newbottom) / 2;
+                    letters[n_letters].r = distance(left, top, right, newbottom) / 2;
+                    letters[n_letters].min_x = left;
+                    letters[n_letters].max_x = right;
+                    letters[n_letters].min_y = top;
+                    letters[n_letters].max_y = newbottom;
+                    letters[n_letters].curve = p;
+                    if (newbottom - top > real_font_height)
+                        real_font_height = newbottom - top;
+                    letters[n_letters].free = true;
+                    n_letters++;
+                    if (n_letters >= MAX_ATOMS)
+                        n_letters--;
+                    delete_bonds_in_char(bond, n_bond, atom, left, top, right, bottom);
+                    delete_curve_with_children(atom, bond, n_atom, n_bond, p);
+                    found = true;
+                }
+            }
+            if (((bottom - top) <= max_font_height) && ((right - left) <= 2 * max_font_width) && (right - left
+                                                                                                  > V_DISPLACEMENT) && (bottom - top > MIN_FONT_HEIGHT) && !found)
+            {
+
+                char label1 = 0;
+                int newright = (left + right) / 2;
+                label1 = get_atom_label(orig, bgColor, left, top, newright, bottom, THRESHOLD, (left + newright) / 2,
+                                        top, false, verbose);
+                char label2 = 0;
+                int newleft = (left + right) / 2;
+                label2 = get_atom_label(orig, bgColor, newleft, top, right, bottom, THRESHOLD, (newleft + right) / 2,
+                                        top, false, verbose);
+                if ((label1 != 0) && (label2 != 0))
+                {
+                    //cout << label1 << label2 << endl;
+                    letters_t lt1;
+                    letters.push_back(lt1);
+                    letters[n_letters].a = label1;
+                    letters[n_letters].x = (left + newright) / 2;
+                    letters[n_letters].y = (top + bottom) / 2;
+                    letters[n_letters].r = distance(left, top, newright, bottom) / 2;
+                    letters[n_letters].min_x = left;
+                    letters[n_letters].max_x = newright;
+                    letters[n_letters].min_y = top;
+                    letters[n_letters].max_y = bottom;
+                    letters[n_letters].curve = p;
+                    if (newright - left > real_font_width)
+                        real_font_width = newright - left;
+                    if (bottom - top > real_font_height)
+                        real_font_height = bottom - top;
+                    letters[n_letters].free = true;
+                    n_letters++;
+                    if (n_letters >= MAX_ATOMS)
+                        n_letters--;
+                    letters_t lt2;
+                    letters.push_back(lt2);
+                    letters[n_letters].a = label2;
+                    letters[n_letters].x = (newleft + right) / 2;
+                    letters[n_letters].y = (top + bottom) / 2;
+                    letters[n_letters].r = distance(newleft, top, right, bottom) / 2;
+                    letters[n_letters].min_x = newleft;
+                    letters[n_letters].max_x = right;
+                    letters[n_letters].min_y = top;
+                    letters[n_letters].max_y = bottom;
+                    letters[n_letters].curve = p;
+                    if (right - newleft > real_font_width)
+                        real_font_width = right - newleft;
+                    letters[n_letters].free = true;
+                    n_letters++;
+                    if (n_letters >= MAX_ATOMS)
+                        n_letters--;
+                    delete_bonds_in_char(bond, n_bond, atom, left, top, right, bottom);
+                    delete_curve_with_children(atom, bond, n_atom, n_bond, p);
+                    found = true;
+                }
+            }
+
+        }
+        p = p->next;
+    }
+    if (real_font_width < 1)
+        real_font_width = max_font_width;
+    else
+        real_font_width++;
+    if (real_font_height < 1)
+        real_font_height = max_font_height;
+    else
+        real_font_height++;
+    return (n_letters);
+}
+
 
 
 int find_fused_chars(std::vector<bond_t> &bond, int n_bond, std::vector<atom_t> &atom,

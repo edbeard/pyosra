@@ -1237,6 +1237,8 @@ int osra_process_image(
 int hack_osra_process_image(
   const char *image_data,
   int image_length,
+  std::vector<std::string> rgroup_vars,
+  std::vector<std::string> rgroup_values,
   const std::string &input_file,
   const std::string &output_file,
   int rotate,
@@ -1262,6 +1264,7 @@ int hack_osra_process_image(
   const std::string &output_image_file_prefix,
   const std::string &resize,
   const std::string &preview
+//  std::vector<std::vector<std::string, std::string>> rgroup
 )
 {
 bool from_file = false;
@@ -1578,8 +1581,8 @@ if (from_file == true){
                 n_atom = find_atoms(p, atom, bond, &n_bond,width,height);
 
                 int real_font_width, real_font_height;
-                n_letters = find_chars(p, orig_box, letters, atom, bond, n_atom, n_bond, height, width, bgColor,
-                                       THRESHOLD_BOND, max_font_width, max_font_height, real_font_width, real_font_height,verbose);
+                n_letters = find_chars_rgroup(p, orig_box, letters, atom, bond, n_atom, n_bond, height, width, bgColor,
+                                       THRESHOLD_BOND, max_font_width, max_font_height, real_font_width, real_font_height,verbose, "RX");
                 if (verbose)
                   std::cout << "Number of atoms: " << n_atom << ", bonds: " << n_bond << ", " << n_letters << " letters: " << n_letters << " " << letters << " after find_atoms()" << std::endl;
 
@@ -1699,27 +1702,92 @@ if (from_file == true){
                             letters, n_letters);
 		int recognized_chars = count_recognized_chars(atom,bond);
 
+		std::vector<std::map<std::string, std::string> > list_of_rgroup_maps;
 
-                assign_charge(atom, bond, n_atom, n_bond, spelling, superatom, debug);
-                find_up_down_bonds(bond, n_bond, atom, thickness);
-                int real_atoms = count_atoms(atom, n_atom);
-                int bond_max_type = 0;
-                int real_bonds = count_bonds(bond, n_bond,bond_max_type);
+		// Instatiate and populate map and vector
+		std::map<std::string, std::string> map_of_rgroups;
+		std::map<std::string, std::string> dummy_map_of_rgroups;
+		std::vector<std::string> rgroup_vars;
 
-                if (verbose)
-                  std::cout << "Final number of atoms: " << real_atoms << ", bonds: " << real_bonds << ", chars: " << n_letters << '.' << std::endl;
+		map_of_rgroups.insert(std::make_pair("R", "CH3"));
+        dummy_map_of_rgroups.insert(std::make_pair("R", "OCH3"));
+
+		rgroup_vars.push_back("R");
+		list_of_rgroup_maps.push_back(map_of_rgroups);
+		list_of_rgroup_maps.push_back(dummy_map_of_rgroups);
 
 
-                split_fragments_and_assemble_structure_record(atom,n_atom,bond,n_bond,boxes,
-							      l,k,resolution,res_iter,output_image_file_prefix,image,orig_box,real_font_width,real_font_height,
-							      thickness,avg_bond_length,superatom,real_atoms,real_bonds,bond_max_type,
-							      box_scale,page_scale,rotation,unpaper_dx,unpaper_dy,output_format,embedded_format,is_reaction,show_confidence,
-							      show_resolution_guess,show_page,show_coordinates, show_avg_bond_length,array_of_structures,
-							      array_of_avg_bonds,array_of_ind_conf,array_of_images,array_of_boxes,total_boxes,total_confidence,
-							      recognized_chars,show_learning,res_iter,verbose, bracket_boxes);
 
-                if (st != NULL)
-                  potrace_state_free(st);
+
+
+                      for (int m = 0; m < n_atom; m++) {
+//                      std::cout << "This atom is: " << atom[m] << std::endl;
+//                      std::cout << "This atom's label is: " << atom[m].label << std::endl;
+                          for (int z = 0; z < rgroup_vars.size(); z++) {
+
+
+                              if (atom[m].label == rgroup_vars[z]) {
+                                  std::cout << "Previous Atom was " << atom[m] << std::endl;
+
+                                  atom[m].label = map_of_rgroups[rgroup_vars[z]];
+                                  std::cout << " Atom updated to " << atom[m] << std::endl;
+                              }
+
+                          }
+
+//                      if(atom[m].label == "R"){
+//                          std::cout << "Previous Atom was " << atom[m] << std::endl;
+//
+//                          atom[m].label = "CH3";
+//                          std::cout << " Atom updated to " << atom[m] << std::endl;
+//                      }
+                      }
+
+                      assign_charge(atom, bond, n_atom, n_bond, spelling, superatom, debug);
+                      find_up_down_bonds(bond, n_bond, atom, thickness);
+                      int real_atoms = count_atoms(atom, n_atom);
+                      int bond_max_type = 0;
+                      int real_bonds = count_bonds(bond, n_bond, bond_max_type);
+
+                      if (verbose)
+                          std::cout << "Final number of atoms: " << real_atoms << ", bonds: " << real_bonds
+                                    << ", chars: " << n_letters << '.' << std::endl;
+
+                      std::cout << "Raw extracted atoms:  " << atom.size() << std::endl;
+                      std::cout << "No of atoms:  " << n_atom << std::endl;
+                      //std::cout << "All bonds:  " << bond << std::endl;
+
+
+                      // std::cout << "No of bonds:  " << n_atom << std::endl;
+//                  std::cout << "superatoms:  " << std::endl;
+//                  for(std::map<string, pair<string,string> >::const_iterator it = superatom.begin();
+//                          it != superatom.end(); ++it)
+//                  {
+//                      std::cout << it->first << " " << it->second.first << " " << it->second.second << "\n";
+//                  }
+                      //std::cout << "Real atoms:  " << n_atom << std::endl;
+
+
+                      split_fragments_and_assemble_structure_record(atom, n_atom, bond, n_bond, boxes,
+                                                                    l, k, resolution, res_iter,
+                                                                    output_image_file_prefix, image, orig_box,
+                                                                    real_font_width, real_font_height,
+                                                                    thickness, avg_bond_length, superatom, real_atoms,
+                                                                    real_bonds, bond_max_type,
+                                                                    box_scale, page_scale, rotation, unpaper_dx,
+                                                                    unpaper_dy, output_format, embedded_format,
+                                                                    is_reaction, show_confidence,
+                                                                    show_resolution_guess, show_page, show_coordinates,
+                                                                    show_avg_bond_length, array_of_structures,
+                                                                    array_of_avg_bonds, array_of_ind_conf,
+                                                                    array_of_images, array_of_boxes, total_boxes,
+                                                                    total_confidence,
+                                                                    recognized_chars, show_learning, res_iter, verbose,
+                                                                    bracket_boxes);
+
+                      if (st != NULL)
+                          potrace_state_free(st);
+
               }
 	  array_of_confidence[res_iter] += total_confidence;
 	  boxes_per_res[res_iter] += total_boxes;
@@ -1913,5 +1981,3 @@ void test_osra_lib(const std::string &output, int pointless)
 
   return;
 }
-
-// test change
