@@ -1,2 +1,4 @@
 c1cc(C)ccc1N(c1ccc(/C=C/c2ccc(/C=C/c3ccc(N(c4ccc(cc4)C)c4ccc(C)cc4)cc3)c3ccccc23)cc1)c1ccc(C)cc1
 c1cccc2c1n(c1c2cc(cc1)/C=C/c1ccc(/C=C/c2ccc3n(c4c(c3c2)cccc4)CC)c2ccccc12)CC
+c1cc(OC)ccc1N(c1ccc(/C=C/c2ccc(/C=C/c3ccc(N(c4ccc(cc4)OC)c4ccc(OC)cc4)cc3)c3ccccc23)cc1)c1ccc(OC)cc1
+c1cccc2c1n(c1c2cc(cc1)/C=C/c1ccc(/C=C/c2ccc3n(c4c(c3c2)cccc4)CC)c2ccccc12)CC
