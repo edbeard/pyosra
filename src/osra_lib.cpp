@@ -21,7 +21,6 @@
 #include <stdlib.h> // malloc(), free()
 #include <math.h> // fabs(double)
 #include <float.h> // FLT_MAX
-#include <limits.h> // INT_MAX
 
 #include <list> // sdt::list
 #include <vector> // std::vector
@@ -1234,11 +1233,27 @@ int osra_process_image(
   return 0;
 }
 
-int hack_osra_process_image(
+std::vector<std::map<std::string, std::string> > initialize_rgroup() {
+
+    std::vector<std::map<std::string, std::string> > list_of_rgroup_maps;
+    std::map<std::string, std::string> map_of_rgroups;
+    std::map<std::string, std::string> dummy_map_of_rgroups;
+
+    map_of_rgroups.insert(std::make_pair("R", "CH3"));
+    dummy_map_of_rgroups.insert(std::make_pair("R", "OCH3"));
+
+    list_of_rgroup_maps.push_back(map_of_rgroups);
+    list_of_rgroup_maps.push_back(dummy_map_of_rgroups);
+
+    return list_of_rgroup_maps;
+
+}
+
+
+std::vector<std::string> hack_osra_process_image(
+  std::vector<std::map<std::string, std::string> > list_of_rgroup_maps,
   const char *image_data,
   int image_length,
-  std::vector<std::string> rgroup_vars,
-  std::vector<std::string> rgroup_values,
   const std::string &input_file,
   const std::string &output_file,
   int rotate,
@@ -1264,7 +1279,6 @@ int hack_osra_process_image(
   const std::string &output_image_file_prefix,
   const std::string &resize,
   const std::string &preview
-//  std::vector<std::vector<std::string, std::string>> rgroup
 )
 {
 bool from_file = false;
@@ -1272,17 +1286,19 @@ bool from_file = false;
 //int image_length = 4;
 int global_init_state;
 
+//list_of_rgroup_maps = initialize_rgroup();
 
-if (from_file == true){
-  if (global_init_state != 0) return global_init_state;
-}
+
+//if (from_file == true){
+//  if (global_init_state != 0) return global_init_state;
+//}
 
   std::transform(output_format.begin(), output_format.end(), output_format.begin(), ::tolower);
   std::transform(embedded_format.begin(), embedded_format.end(), embedded_format.begin(), ::tolower);
 
   std::map<std::string, std::string> spelling, superatom;
   int err = load_superatom_spelling_maps(spelling, superatom, osra_dir, spelling_file, superatom_file, verbose);
-  if (err != 0) return err;
+  if (err != 0) return std::vector<std::string>();
 
   std::string type;
 
@@ -1342,7 +1358,7 @@ if (from_file = true){
 } else {
       std::cerr << "Cannot open file \"" << input_file << '"' << std::endl;
 }
-      return ERROR_UNKNOWN_IMAGE_TYPE;
+      return std::vector<std::string>();
     }
 
   if (verbose)
@@ -1356,7 +1372,7 @@ if (!output_file.empty())
   if (outfile.bad() || !outfile.is_open())
     {
       std::cerr << "Cannot open file \"" << output_file << "\" for output" << std::endl;
-      return ERROR_OUTPUT_FILE_OPEN_FAILED;
+      return std::vector<std::string>();
     }
 }
 
@@ -1366,7 +1382,7 @@ if (!output_file.empty())
     {
       std::cerr << "Showing the box coordinates is currently not supported together with image rotation and is therefore disabled." << std::endl;
 if (from_file == true){
-      return ERROR_ILLEGAL_ARGUMENT_COMBINATION;
+      return std::vector<std::string>();
 }else{
       show_coordinates = false;
 }
@@ -1376,7 +1392,7 @@ if (from_file == true){
                                     || embedded_format == "can")))
     {
       std::cerr << "Embedded format option is only possible if output format is SDF and option can have only inchi, smi, or can values." << std::endl;
-      return ERROR_ILLEGAL_ARGUMENT_COMBINATION;
+      return std::vector<std::string>();
     }
 
   // This will hide the output "Warning: non-positive median line gap" from GOCR. Remove after this is fixed:
@@ -1513,21 +1529,11 @@ if (from_file == true){
       if (verbose)
         std::cout << "Number of boxes: " << boxes.size() << '.' << std::endl;
 
-      // Creating r-group maps for all possible combos
-
-        std::vector<std::map<std::string, std::string> > list_of_rgroup_maps;
 
         // Instatiate and populate map and vector
-        std::map<std::string, std::string> map_of_rgroups;
-        std::map<std::string, std::string> dummy_map_of_rgroups;
+
         std::vector<std::string> rgroup_vars;
-
-        map_of_rgroups.insert(std::make_pair("R", "CH3"));
-        dummy_map_of_rgroups.insert(std::make_pair("R", "OCH3"));
-
         rgroup_vars.push_back("R");
-        list_of_rgroup_maps.push_back(map_of_rgroups);
-        list_of_rgroup_maps.push_back(dummy_map_of_rgroups);
 
         for (int q = 0; q < list_of_rgroup_maps.size(); q++) {
 
@@ -1893,7 +1899,7 @@ if (from_file == true){
 
 
 std::ostream &out_stream = outfile.is_open() ? outfile : std::cout;
-
+std::vector<std::string> output_smiles;
 
   // For Andriod version we will find the structure with maximum confidence value, as the common usecase for Andriod is to analyse the
   // image (taken by embedded photo camera) that usually contains just one molecule:
@@ -1917,6 +1923,7 @@ std::ostream &out_stream = outfile.is_open() ? outfile : std::cout;
 	    if (output_format != "mol" && !is_reaction)
 	      {
 		out_stream << pages_of_structures[l][i];
+		output_smiles.push_back(pages_of_structures[l][i]);
 
 		// Dump this structure into a separate file:
 		if (!output_image_file_prefix.empty())
@@ -1992,7 +1999,7 @@ if (from_file != true){
     outfile.close();
 }
 
-  return 0;
+  return output_smiles;
 }
 
 void test_osra_lib(const std::string &output, int pointless)

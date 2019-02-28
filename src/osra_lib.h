@@ -24,6 +24,7 @@
 
 #include <string> // std::string
 #include <ostream> // std:ostream
+#include <map>
 
 //
 // Section: Functions
@@ -70,11 +71,14 @@ int osra_process_image(
   const std::string &preview = ""
 );
 
-int hack_osra_process_image(
+// Instatiate and populate map and vector
+std::vector<std::map<std::string, std::string> > initialize_rgroup();
+
+
+std::vector<std::string> hack_osra_process_image(
+  std::vector<std::map<std::string, std::string> > list_of_rgroup_maps,
   const char *image_data,
   int image_length,
-  std::vector<std::string> rgroup_vars,
-  std::vector<std::string> rgroup_values,
   const std::string &input_file = "/home/edward/cpp/hack_osra/src/test_rgroup.jpg",
   const std::string &output_file = "/home/edward/cpp/hack_osra/src/output",
   int rotate = 0,
@@ -100,7 +104,6 @@ int hack_osra_process_image(
   const std::string &output_image_file_prefix = "",
   const std::string &resize = "",
   const std::string &preview = ""
-//  std::vector<std::vector<std::string>> rgroup //= std::vector<std::vector<std::string>>{{"R","CH3"}}
 );
 
 void test_osra_lib(
