@@ -77,9 +77,9 @@ std::vector<std::map<std::string, std::string> > initialize_rgroup();
 
 std::vector<std::string> hack_osra_process_image(
   std::vector<std::map<std::string, std::string> > list_of_rgroup_maps,
-  const char *image_data,
-  int image_length,
   const std::string &input_file = "/home/edward/cpp/hack_osra/src/test_rgroup.jpg",
+  const char *image_data = "a",
+  int image_length = 4,
   const std::string &output_file = "/home/edward/cpp/hack_osra/src/output",
   int rotate = 0,
   bool invert = false,

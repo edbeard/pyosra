@@ -153,6 +153,35 @@ unpaper.o: unpaper.cpp /usr/local/include/GraphicsMagick/Magick++.h \
  /usr/local/include/GraphicsMagick/Magick++/CoderInfo.h \
  /usr/local/include/GraphicsMagick/Magick++/Montage.h unpaper.h
 osra_java.o: osra_java.cpp config.h
+mcdlutil.o: mcdlutil.cpp \
+ /usr/local/include/openbabel-2.0/openbabel/babelconfig.h \
+ /usr/local/include/openbabel-2.0/openbabel/mol.h \
+ /usr/local/include/openbabel-2.0/openbabel/atom.h \
+ /usr/local/include/openbabel-2.0/openbabel/base.h \
+ /usr/local/include/openbabel-2.0/openbabel/tokenst.h \
+ /usr/local/include/openbabel-2.0/openbabel/residue.h \
+ /usr/local/include/openbabel-2.0/openbabel/math/vector3.h \
+ /usr/local/include/openbabel-2.0/openbabel/rand.h \
+ /usr/local/include/openbabel-2.0/openbabel/bond.h \
+ /usr/local/include/openbabel-2.0/openbabel/data.h \
+ /usr/local/include/openbabel-2.0/openbabel/chains.h \
+ /usr/local/include/openbabel-2.0/openbabel/bitvec.h \
+ /usr/local/include/openbabel-2.0/openbabel/ring.h \
+ /usr/local/include/openbabel-2.0/openbabel/typer.h \
+ /usr/local/include/openbabel-2.0/openbabel/parsmart.h \
+ /usr/local/include/openbabel-2.0/openbabel/generic.h \
+ /usr/local/include/openbabel-2.0/openbabel/math/spacegroup.h \
+ /usr/local/include/openbabel-2.0/openbabel/math/transform3d.h \
+ /usr/local/include/openbabel-2.0/openbabel/math/matrix3x3.h \
+ /usr/local/include/openbabel-2.0/openbabel/oberror.h \
+ /usr/local/include/openbabel-2.0/openbabel/obutil.h \
+ /usr/local/include/openbabel-2.0/openbabel/obiter.h \
+ /usr/local/include/openbabel-2.0/openbabel/internalcoord.h mcdlutil.h \
+ /usr/local/include/openbabel-2.0/openbabel/obconversion.h \
+ /usr/local/include/openbabel-2.0/openbabel/dlhandler.h \
+ /usr/local/include/openbabel-2.0/openbabel/format.h \
+ /usr/local/include/openbabel-2.0/openbabel/plugin.h \
+ /usr/local/include/openbabel-2.0/openbabel/lineend.h
 recall.o: recall.cpp \
  /usr/local/include/openbabel-2.0/openbabel/obconversion.h \
  /usr/local/include/openbabel-2.0/openbabel/babelconfig.h \
@@ -925,35 +954,6 @@ osra_segment.o: osra_segment.cpp osra.h \
  /usr/local/include/GraphicsMagick/Magick++/Montage.h osra_common.h \
  osra_segment.h osra_labels.h osra_ocr.h
 osra_ocr_tesseract.o: osra_ocr_tesseract.cpp
-mcdlutil.o: mcdlutil.cpp \
- /usr/local/include/openbabel-2.0/openbabel/babelconfig.h \
- /usr/local/include/openbabel-2.0/openbabel/mol.h \
- /usr/local/include/openbabel-2.0/openbabel/atom.h \
- /usr/local/include/openbabel-2.0/openbabel/base.h \
- /usr/local/include/openbabel-2.0/openbabel/tokenst.h \
- /usr/local/include/openbabel-2.0/openbabel/residue.h \
- /usr/local/include/openbabel-2.0/openbabel/math/vector3.h \
- /usr/local/include/openbabel-2.0/openbabel/rand.h \
- /usr/local/include/openbabel-2.0/openbabel/bond.h \
- /usr/local/include/openbabel-2.0/openbabel/data.h \
- /usr/local/include/openbabel-2.0/openbabel/chains.h \
- /usr/local/include/openbabel-2.0/openbabel/bitvec.h \
- /usr/local/include/openbabel-2.0/openbabel/ring.h \
- /usr/local/include/openbabel-2.0/openbabel/typer.h \
- /usr/local/include/openbabel-2.0/openbabel/parsmart.h \
- /usr/local/include/openbabel-2.0/openbabel/generic.h \
- /usr/local/include/openbabel-2.0/openbabel/math/spacegroup.h \
- /usr/local/include/openbabel-2.0/openbabel/math/transform3d.h \
- /usr/local/include/openbabel-2.0/openbabel/math/matrix3x3.h \
- /usr/local/include/openbabel-2.0/openbabel/oberror.h \
- /usr/local/include/openbabel-2.0/openbabel/obutil.h \
- /usr/local/include/openbabel-2.0/openbabel/obiter.h \
- /usr/local/include/openbabel-2.0/openbabel/internalcoord.h mcdlutil.h \
- /usr/local/include/openbabel-2.0/openbabel/obconversion.h \
- /usr/local/include/openbabel-2.0/openbabel/dlhandler.h \
- /usr/local/include/openbabel-2.0/openbabel/format.h \
- /usr/local/include/openbabel-2.0/openbabel/plugin.h \
- /usr/local/include/openbabel-2.0/openbabel/lineend.h
 osra_reaction.o: osra_reaction.cpp \
  /usr/local/include/openbabel-2.0/openbabel/mol.h \
  /usr/local/include/openbabel-2.0/openbabel/babelconfig.h \

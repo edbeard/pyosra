@@ -1252,9 +1252,9 @@ std::vector<std::map<std::string, std::string> > initialize_rgroup() {
 
 std::vector<std::string> hack_osra_process_image(
   std::vector<std::map<std::string, std::string> > list_of_rgroup_maps,
+  const std::string &input_file,
   const char *image_data,
   int image_length,
-  const std::string &input_file,
   const std::string &output_file,
   int rotate,
   bool invert,
