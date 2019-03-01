@@ -1250,6 +1250,725 @@ std::vector<std::map<std::string, std::string> > initialize_rgroup() {
 }
 
 
+std::string read_diagram(
+        const std::string &input_file,
+        const char *image_data,
+        int image_length,
+        const std::string &output_file,
+        int rotate,
+        bool invert,
+        int input_resolution,
+        double threshold,
+        int do_unpaper,
+        bool jaggy,
+        bool adaptive_option,
+        std::string output_format,
+        std::string embedded_format,
+        bool show_confidence,
+        bool show_resolution_guess,
+        bool show_page,
+        bool show_coordinates,
+        bool show_avg_bond_length,
+        bool show_learning,
+        const std::string &osra_dir,
+        const std::string &spelling_file,
+        const std::string &superatom_file,
+        bool debug,
+        bool verbose,
+        const std::string &output_image_file_prefix,
+        const std::string &resize,
+        const std::string &preview
+)
+{
+    bool from_file = false;
+//char image_data = 'a';
+//int image_length = 4;
+    int global_init_state;
+
+//list_of_rgroup_maps = initialize_rgroup();
+
+
+//if (from_file == true){
+//  if (global_init_state != 0) return global_init_state;
+//}
+
+    std::transform(output_format.begin(), output_format.end(), output_format.begin(), ::tolower);
+    std::transform(embedded_format.begin(), embedded_format.end(), embedded_format.begin(), ::tolower);
+
+    std::map<std::string, std::string> spelling, superatom;
+    int err = load_superatom_spelling_maps(spelling, superatom, osra_dir, spelling_file, superatom_file, verbose);
+    if (err != 0) return std::string();
+
+    std::string type;
+
+    if (from_file == true){
+        Blob blob(image_data, image_length);
+    }
+
+    try
+    {
+        Image image_typer;
+
+        image_typer.ping(input_file);
+
+        type = image_typer.magick();
+    }
+    catch (...)
+    {
+        // Unfortunately, GraphicsMagick does not throw exceptions in all cases, so it behaves inconsistent, see
+        // https://sourceforge.net/tracker/?func=detail&aid=3022955&group_id=40728&atid=428740
+    }
+
+    //int stderr_copy = dup(2);
+    //fclose(stderr);
+
+    int page = 1;
+    poppler::document* poppler_doc = NULL;
+    if (type.empty() || type == "PDF" || type == "PS")
+    {
+        if (from_file == true){
+            poppler_doc = poppler::document::load_from_raw_data(image_data, image_length);
+        } else{
+            poppler_doc = poppler::document::load_from_file(input_file);
+        }
+    }
+    if (poppler_doc)
+    {
+        page = poppler_doc->pages();
+        type = "PDF";
+    }
+    else if (type == "PDF" || type == "PS")
+    {
+        type.clear();
+    }
+    else if (!type.empty() && type != "PDF")
+    {
+
+        page = count_pages(input_file);
+
+    }
+    // dup2(stderr_copy, 2);
+    //close(stderr_copy);
+
+    if (type.empty())
+    {
+        if (from_file = true){
+            std::cerr << "Cannot detect blob image type" << std::endl;
+        } else {
+            std::cerr << "Cannot open file \"" << input_file << '"' << std::endl;
+        }
+        return std::string();
+    }
+
+    if (verbose)
+        std::cout << "Image type: " << type << '.' << std::endl;
+
+    std::ofstream outfile;
+
+    if (!output_file.empty())
+    {
+        outfile.open(output_file.c_str(), std::ios::out | std::ios::trunc);
+        if (outfile.bad() || !outfile.is_open())
+        {
+            std::cerr << "Cannot open file \"" << output_file << "\" for output" << std::endl;
+            return std::string();
+        }
+    }
+
+
+
+    if (show_coordinates && rotate != 0)
+    {
+        std::cerr << "Showing the box coordinates is currently not supported together with image rotation and is therefore disabled." << std::endl;
+        if (from_file == true){
+            return std::string();
+        }else{
+            show_coordinates = false;
+        }
+    }
+
+    if (!embedded_format.empty() && !(output_format == "sdf" && (embedded_format == "inchi" || embedded_format == "smi"
+                                                                 || embedded_format == "can")))
+    {
+        std::cerr << "Embedded format option is only possible if output format is SDF and option can have only inchi, smi, or can values." << std::endl;
+        return std::string();
+    }
+
+    // This will hide the output "Warning: non-positive median line gap" from GOCR. Remove after this is fixed:
+    fclose(stderr);
+    OpenBabel::obErrorLog.StopLogging();
+
+    bool is_reaction = false;
+    if (output_format == "cmlr" || output_format == "rsmi" || output_format =="rxn")
+        is_reaction = true;
+
+
+    std::vector<std::vector<std::string> > pages_of_structures(page, std::vector<std::string> (0));
+    std::vector<std::vector<Image> > pages_of_images(page, std::vector<Image> (0));
+    std::vector<std::vector<double> > pages_of_avg_bonds(page, std::vector<double> (0));
+    std::vector<std::vector<double> > pages_of_ind_conf(page, std::vector<double> (0));
+    std::vector<std::vector<box_t> > pages_of_boxes(page, std::vector<box_t> (0));
+    std::vector<std::vector<arrow_t> > arrows(page, std::vector<arrow_t>(0));
+    std::vector<std::vector<plus_t> > pluses(page, std::vector<plus_t>(0));
+
+    int total_structure_count = 0;
+    int num_resolutions = NUM_RESOLUTIONS;
+    if (input_resolution != 0)
+        num_resolutions = 1;
+    std::vector<double> array_of_confidence(num_resolutions, 0);
+    std::vector<int> boxes_per_res(num_resolutions,0);
+    std::vector<int> select_resolution(num_resolutions, input_resolution);
+    set_select_resolution(select_resolution,input_resolution);
+    std::vector<std::vector<std::vector<std::string> > > array_of_structures_page(
+            page, std::vector<std::vector<std::string> >(num_resolutions));
+    std::vector<std::vector<std::vector<double> > > array_of_avg_bonds_page(
+            page, std::vector<std::vector<double> >(num_resolutions));
+    std::vector<std::vector<std::vector<double> > > array_of_ind_conf_page(
+            page, std::vector<std::vector<double> >(num_resolutions));
+    std::vector<std::vector<std::vector<Image> > > array_of_images_page(
+            page, std::vector<std::vector<Image> > (num_resolutions));
+    std::vector<std::vector<std::vector<box_t> > > array_of_boxes_page(
+            page, std::vector<std::vector<box_t> >(num_resolutions));
+
+//#pragma omp parallel for default(shared) private(OCR_JOB,JOB)
+    for (int l = 0; l < page; l++)
+    {
+        Image image;
+        double page_scale=1;
+        poppler::page_renderer poppler_renderer;
+
+        int ttt = 0;
+
+        if (verbose)
+            std::cout << "Processing page " << (l+1) << " out of " << page << "..." << std::endl;
+
+        if (type == "PDF" || type == "PS")
+            page_scale *= (double) 72 / input_resolution;
+
+
+        if (poppler_doc) // process PDF and PS files
+        {
+            int resolution = input_resolution;
+            if (resolution == 0)
+                resolution = 300;
+            image = process_pdf_page(poppler_doc, poppler_renderer, l, resolution);
+        }
+        else
+        {
+
+            std::ostringstream pname;
+            pname << input_file << "[" << l << "]";
+#pragma omp critical
+            {
+                image.read(pname.str());
+            }
+
+        }
+        if (l == 0 && !preview.empty())
+        {
+            try
+            {
+                image.write(preview);
+            }
+            catch(...)
+            {}
+        }
+
+        image.modifyImage();
+        bool adaptive = convert_to_gray(image, invert, adaptive_option, verbose);
+
+        std::vector<std::vector<std::string> > array_of_structures(num_resolutions);
+        std::vector<std::vector<double> > array_of_avg_bonds(num_resolutions), array_of_ind_conf(num_resolutions);
+        std::vector<std::vector<Image> > array_of_images(num_resolutions);
+        std::vector<std::vector<box_t> > array_of_boxes(num_resolutions);
+
+        if (input_resolution > 300)
+        {
+            int percent = (100 * 300) / input_resolution;
+            std::ostringstream scale;
+            scale << percent << "%";
+            image.scale(scale.str());
+            page_scale /= (double) percent / 100;
+        }
+
+        if (verbose)
+            std::cout << "Input resolutions are " << select_resolution << std::endl;
+
+        ColorGray bgColor = getBgColor(image);
+        if (rotate != 0)
+        {
+            image.backgroundColor(bgColor);
+            image.rotate(rotate);
+        }
+
+        double rotation = 0;
+        int unpaper_dx = 0;
+        int unpaper_dy = 0;
+        for (int i = 0; i < do_unpaper; i++)
+        {
+            double radians=0;
+            int dx=0, dy=0;
+            unpaper(image,radians,dx,dy);
+            rotation +=radians;
+            unpaper_dx +=dx;
+            unpaper_dy +=dy;
+        }
+
+        // 0.1 is used for THRESHOLD_BOND here to allow for farther processing.
+        std::list<std::list<std::list<point_t> > > clusters = find_segments(image, 0.1, bgColor, adaptive, is_reaction, arrows[l], pluses[l], verbose);
+
+        if (verbose)
+            std::cout << "Number of clusters: " << clusters.size() << '.' << std::endl;
+
+        std::vector<box_t> boxes;
+        std::set<std::pair<int, int> > brackets;
+        int n_boxes = prune_clusters(clusters, boxes, brackets);
+        std::sort(boxes.begin(), boxes.end(), comp_boxes);
+
+        if (verbose)
+            std::cout << "Number of boxes: " << boxes.size() << '.' << std::endl;
+
+
+            for (int res_iter = 0; res_iter < num_resolutions; res_iter++) {
+                int total_boxes = 0;
+                double total_confidence = 0;
+
+                int resolution = select_resolution[res_iter];
+                int working_resolution = resolution;
+                if (resolution > 300)
+                    working_resolution = 300;
+
+                double THRESHOLD_BOND = set_threshold(threshold, resolution);
+
+                int max_font_height = MAX_FONT_HEIGHT * working_resolution / 150;
+                int max_font_width = MAX_FONT_WIDTH * working_resolution / 150;
+                bool thick = true;
+                if (resolution < 150)
+                    thick = false;
+                else if (resolution == 150 && !jaggy)
+                    thick = false;
+
+                //Image dbg = image;
+                //dbg.modifyImage();
+                //dbg.backgroundColor("white");
+                //dbg.erase();
+                //dbg.type(TrueColorType);
+                for (int k = 0; k < n_boxes; k++)
+                    if ((boxes[k].x2 - boxes[k].x1) > max_font_width && (boxes[k].y2 - boxes[k].y1) > max_font_height
+                        && !boxes[k].c.empty() && ((boxes[k].x2 - boxes[k].x1) > 2 * max_font_width || (boxes[k].y2
+                                                                                                        - boxes[k].y1) >
+                                                                                                       2 *
+                                                                                                       max_font_height)) {
+                        int n_atom = 0, n_bond = 0, n_letters = 0, n_label = 0;
+                        std::vector<atom_t> atom;
+                        std::vector<bond_t> bond;
+                        std::vector<letters_t> letters;
+                        std::vector<label_t> label;
+                        double box_scale = 1;
+                        Image orig_box(Geometry(boxes[k].x2 - boxes[k].x1 + 2 * FRAME, boxes[k].y2 - boxes[k].y1 + 2
+                                                                                                                   *
+                                                                                                                   FRAME),
+                                       bgColor);
+
+                        for (unsigned int p = 0; p < boxes[k].c.size(); p++) {
+                            int x = boxes[k].c[p].x;
+                            int y = boxes[k].c[p].y;
+                            ColorGray color = image.pixelColor(x, y);
+                            //dbg.pixelColor(x, y, color);
+                            orig_box.pixelColor(x - boxes[k].x1 + FRAME, y - boxes[k].y1 + FRAME, color);
+                        }
+
+
+                        int width = orig_box.columns();
+                        int height = orig_box.rows();
+                        Image thick_box;
+                        create_thick_box(orig_box, thick_box, width, height, resolution, working_resolution, box_scale,
+                                         bgColor, THRESHOLD_BOND, res_iter, thick, jaggy);
+
+                        if (verbose)
+                            std::cout << "Analysing box " << boxes[k].x1 << "x" << boxes[k].y1 << "-" << boxes[k].x2
+                                      << "x" << boxes[k].y2 << " using working resolution " << working_resolution << '.'
+                                      << std::endl;
+
+                        Image box;
+                        if (thick)
+                            box = thin_image(thick_box, THRESHOLD_BOND, bgColor);
+                        else
+                            box = thick_box;
+                        potrace_state_t *const st = raster_to_vector(box, bgColor, THRESHOLD_BOND, width, height,
+                                                                     working_resolution);
+                        potrace_path_t const *const p = st->plist;
+                        n_atom = find_atoms(p, atom, bond, &n_bond, width, height);
+
+                        int real_font_width, real_font_height;
+                        n_letters = find_chars_rgroup(p, orig_box, letters, atom, bond, n_atom, n_bond, height, width,
+                                                      bgColor,
+                                                      THRESHOLD_BOND, max_font_width, max_font_height, real_font_width,
+                                                      real_font_height, verbose, "RX");
+                        if (verbose)
+                            std::cout << "Number of atoms: " << n_atom << ", bonds: " << n_bond << ", " << n_letters
+                                      << " letters: " << n_letters << " " << letters << " after find_atoms()"
+                                      << std::endl;
+
+                        double avg_bond_length = percentile75(bond, n_bond, atom);
+
+                        double max_area = avg_bond_length * 5;
+                        if (thick)
+                            max_area = avg_bond_length;
+                        n_letters = find_plus_minus(p, orig_box, bgColor, THRESHOLD_BOND, letters, atom, bond, n_atom,
+                                                    n_bond, height, width,
+                                                    real_font_height, real_font_width, n_letters, avg_bond_length);
+                        n_atom = find_small_bonds(p, atom, bond, n_atom, &n_bond, max_area, avg_bond_length / 2, 5);
+
+                        //remove_small_bonds_in_chars(atom,bond,letters);
+
+                        find_old_aromatic_bonds(p, bond, n_bond, atom, n_atom, avg_bond_length);
+
+                        if (verbose)
+                            std::cout << "Number of atoms: " << n_atom << ", bonds: " << n_bond << ", " << n_letters
+                                      << "letters: " << letters << " after find_old_aromatic_bonds()" << std::endl;
+
+                        double dist = 3.;
+                        if (working_resolution < 150)
+                            dist = 2;
+
+                        double thickness = skeletize(atom, bond, n_bond, box, THRESHOLD_BOND, bgColor, dist,
+                                                     avg_bond_length);
+                        remove_disconnected_atoms(atom, bond, n_atom, n_bond);
+                        collapse_atoms(atom, bond, n_atom, n_bond, 3);
+                        remove_zero_bonds(bond, n_bond, atom);
+
+                        n_bond = find_wavy_bonds(bond, n_bond, atom, avg_bond_length);
+                        //				if (ttt++ == 0)  debug_image(orig_box, atom, n_atom, bond, n_bond, "tmp.png");
+                        n_letters = find_fused_chars(bond, n_bond, atom, letters, n_letters, real_font_height,
+                                                     real_font_width, 0, orig_box, bgColor, THRESHOLD_BOND, 3, verbose);
+
+                        n_letters = find_fused_chars(bond, n_bond, atom, letters, n_letters, real_font_height,
+                                                     real_font_width, '*', orig_box, bgColor, THRESHOLD_BOND, 5,
+                                                     verbose);
+
+                        flatten_bonds(bond, n_bond, atom, 3);
+                        remove_zero_bonds(bond, n_bond, atom);
+                        avg_bond_length = percentile75(bond, n_bond, atom);
+
+                        if (verbose)
+                            std::cout << "Average bond length: " << avg_bond_length << std::endl;
+
+                        double max_dist_double_bond = dist_double_bonds(atom, bond, n_bond, avg_bond_length);
+                        n_bond = double_triple_bonds(atom, bond, n_bond, avg_bond_length, n_atom, max_dist_double_bond);
+                        n_atom = find_dashed_bonds(p, atom, bond, n_atom, &n_bond,
+                                                   std::max(MAX_DASH, int(avg_bond_length / 3)),
+                                                   avg_bond_length, orig_box, bgColor, THRESHOLD_BOND, thick,
+                                                   avg_bond_length, letters);
+
+                        n_letters = remove_small_bonds(bond, n_bond, atom, letters, n_letters, real_font_height,
+                                                       MIN_FONT_HEIGHT, avg_bond_length);
+
+                        n_letters = find_numbers(p, orig_box, letters, atom, bond, n_atom, n_bond, height, width,
+                                                 bgColor,
+                                                 THRESHOLD_BOND, n_letters);
+
+                        dist = 4.;
+                        if (working_resolution < 300)
+                            dist = 3;
+                        if (working_resolution < 150)
+                            dist = 2;
+
+                        n_bond = fix_one_sided_bonds(bond, n_bond, atom, dist, avg_bond_length);
+
+                        n_letters = clean_unrecognized_characters(bond, n_bond, atom, real_font_height, real_font_width,
+                                                                  4,
+                                                                  letters, n_letters);
+
+                        thickness = find_wedge_bonds(thick_box, atom, n_atom, bond, n_bond, bgColor, THRESHOLD_BOND,
+                                                     max_dist_double_bond, avg_bond_length, 3, 1);
+
+                        n_label = assemble_labels(letters, n_letters, label);
+
+                        if (verbose)
+                            std::cout << n_label << " labels: " << label << " after assemble_labels()" << std::endl;
+
+                        remove_disconnected_atoms(atom, bond, n_atom, n_bond);
+
+                        collapse_atoms(atom, bond, n_atom, n_bond, thickness);
+
+                        remove_zero_bonds(bond, n_bond, atom);
+
+                        flatten_bonds(bond, n_bond, atom, 2 * thickness);
+
+                        remove_zero_bonds(bond, n_bond, atom);
+
+                        avg_bond_length = percentile75(bond, n_bond, atom);
+
+                        collapse_double_bonds(bond, n_bond, atom, max_dist_double_bond);
+
+                        extend_terminal_bond_to_label(atom, letters, n_letters, bond, n_bond, label, n_label,
+                                                      avg_bond_length / 2,
+                                                      thickness, max_dist_double_bond);
+
+                        remove_disconnected_atoms(atom, bond, n_atom, n_bond);
+                        collapse_atoms(atom, bond, n_atom, n_bond, thickness);
+                        collapse_doubleup_bonds(bond, n_bond);
+
+                        remove_zero_bonds(bond, n_bond, atom);
+                        flatten_bonds(bond, n_bond, atom, thickness);
+                        remove_zero_bonds(bond, n_bond, atom);
+                        remove_disconnected_atoms(atom, bond, n_atom, n_bond);
+
+                        extend_terminal_bond_to_bonds(atom, bond, n_bond, avg_bond_length, 2 * thickness,
+                                                      max_dist_double_bond);
+
+                        std::vector<bracket_t> bracket_boxes;
+                        remove_bracket_atoms(atom, n_atom, bond, n_bond, brackets, thickness, boxes[k].x1, boxes[k].y1,
+                                             box_scale, real_font_width, real_font_height, bracket_boxes);
+                        remove_zero_bonds(bond, n_bond, atom);
+                        remove_vertical_bonds_close_to_brackets(bracket_boxes, atom, bond, n_bond, thickness,
+                                                                avg_bond_length);
+                        remove_zero_bonds(bond, n_bond, atom);
+                        flatten_bonds(bond, n_bond, atom, 2 * thickness);
+                        assign_labels_to_brackets(bracket_boxes, label, n_label, letters, n_letters, real_font_width,
+                                                  real_font_height);
+
+                        collapse_atoms(atom, bond, n_atom, n_bond, 3);
+
+                        remove_zero_bonds(bond, n_bond, atom);
+                        flatten_bonds(bond, n_bond, atom, 5);
+                        remove_zero_bonds(bond, n_bond, atom);
+
+                        n_letters = clean_unrecognized_characters(bond, n_bond, atom, real_font_height, real_font_width,
+                                                                  0,
+                                                                  letters, n_letters);
+                        int recognized_chars = count_recognized_chars(atom, bond);
+
+
+                        assign_charge(atom, bond, n_atom, n_bond, spelling, superatom, debug);
+                        find_up_down_bonds(bond, n_bond, atom, thickness);
+                        int real_atoms = count_atoms(atom, n_atom);
+                        int bond_max_type = 0;
+                        int real_bonds = count_bonds(bond, n_bond, bond_max_type);
+
+                        if (verbose)
+                            std::cout << "Final number of atoms: " << real_atoms << ", bonds: " << real_bonds
+                                      << ", chars: " << n_letters << '.' << std::endl;
+
+                        std::cout << "Raw extracted atoms:  " << atom.size() << std::endl;
+                        std::cout << "No of atoms:  " << n_atom << std::endl;
+                        //std::cout << "All bonds:  " << bond << std::endl;
+
+
+                        // std::cout << "No of bonds:  " << n_atom << std::endl;
+//                  std::cout << "superatoms:  " << std::endl;
+//                  for(std::map<string, pair<string,string> >::const_iterator it = superatom.begin();
+//                          it != superatom.end(); ++it)
+//                  {
+//                      std::cout << it->first << " " << it->second.first << " " << it->second.second << "\n";
+//                  }
+                        //std::cout << "Real atoms:  " << n_atom << std::endl;
+
+
+                        split_fragments_and_assemble_structure_record(atom, n_atom, bond, n_bond, boxes,
+                                                                      l, k, resolution, res_iter,
+                                                                      output_image_file_prefix, image, orig_box,
+                                                                      real_font_width, real_font_height,
+                                                                      thickness, avg_bond_length, superatom, real_atoms,
+                                                                      real_bonds, bond_max_type,
+                                                                      box_scale, page_scale, rotation, unpaper_dx,
+                                                                      unpaper_dy, output_format, embedded_format,
+                                                                      is_reaction, show_confidence,
+                                                                      show_resolution_guess, show_page,
+                                                                      show_coordinates,
+                                                                      show_avg_bond_length, array_of_structures,
+                                                                      array_of_avg_bonds, array_of_ind_conf,
+                                                                      array_of_images, array_of_boxes, total_boxes,
+                                                                      total_confidence,
+                                                                      recognized_chars, show_learning, res_iter,
+                                                                      verbose,
+                                                                      bracket_boxes);
+
+                        if (st != NULL)
+                            potrace_state_free(st);
+
+                    }
+                array_of_confidence[res_iter] += total_confidence;
+                boxes_per_res[res_iter] += total_boxes;
+                //dbg.write("debug.png");
+            }
+
+#pragma omp critical
+        {
+            if (show_learning)
+                for (int j = 0; j < num_resolutions; j++)
+                    for (unsigned int i = 0; i < array_of_structures[j].size(); i++)
+                    {
+                        pages_of_structures[l].push_back(array_of_structures[j][i]);
+                        if (!output_image_file_prefix.empty())
+                            pages_of_images[l].push_back(array_of_images[j][i]);
+                        pages_of_avg_bonds[l].push_back(array_of_avg_bonds[j][i]);
+                        pages_of_ind_conf[l].push_back(array_of_ind_conf[j][i]);
+                        pages_of_boxes[l].push_back(array_of_boxes[j][i]);
+                        total_structure_count++;
+                    }
+            else
+                for (int j = 0; j < num_resolutions; j++)
+                {
+                    array_of_structures_page[l][j] = array_of_structures[j];
+                    if (!output_image_file_prefix.empty())
+                        array_of_images_page[l][j] = array_of_images[j];
+                    array_of_avg_bonds_page[l][j] = array_of_avg_bonds[j];
+                    array_of_ind_conf_page[l][j] = array_of_ind_conf[j];
+                    array_of_boxes_page[l][j] = array_of_boxes[j];
+                }
+
+        }
+    }
+
+    double max_conf = -FLT_MAX;
+    int max_res = 0;
+    for (int i = 0; i < num_resolutions; i++)
+    {
+        if (boxes_per_res[i] > 0 && array_of_confidence[i]/boxes_per_res[i] > max_conf)
+        {
+            max_conf = array_of_confidence[i]/boxes_per_res[i];
+            max_res = i;
+        }
+    }
+    for (int i = 0; i < num_resolutions; i++)
+        if (boxes_per_res[i] > 0 && array_of_confidence[i]/boxes_per_res[i] == max_conf && select_resolution[i] == 300) // second 300 dpi is without thinning
+        {
+            max_res = i;
+            break;
+        }
+
+    if (!show_learning)
+        for (int l = 0; l < page; l++)
+        {
+            pages_of_structures[l] = array_of_structures_page[l][max_res];
+            if (!output_image_file_prefix.empty())
+                pages_of_images[l] = array_of_images_page[l][max_res];
+            pages_of_avg_bonds[l] = array_of_avg_bonds_page[l][max_res];
+            pages_of_ind_conf[l] = array_of_ind_conf_page[l][max_res];
+            pages_of_boxes[l] = array_of_boxes_page[l][max_res];
+            total_structure_count += array_of_structures_page[l][max_res].size();
+        }
+
+    double best_bond = 0;
+
+    //if (total_structure_count >= STRUCTURE_COUNT)
+    //  find_limits_on_avg_bond(best_bond, pages_of_avg_bonds, pages_of_ind_conf);
+
+    // If multiple pages are processed at several  resolutions different pages
+    // may be processed at different resolutions leading to a seemingly different average bond length
+    // Currently multi-page documents (PDF and PS) are all processed at the same resolution
+    // and single-page images have all structures on the page at the same resolution
+
+    //cout << min_bond << " " << max_bond << endl;
+
+
+    std::ostream &out_stream = outfile.is_open() ? outfile : std::cout;
+    std::string output_smile;
+
+    // For Andriod version we will find the structure with maximum confidence value, as the common usecase for Andriod is to analyse the
+    // image (taken by embedded photo camera) that usually contains just one molecule:
+    double max_confidence = -FLT_MAX;
+    int l_index = 0;
+    int i_index = 0;
+    int image_count = 0;
+
+    for (int l = 0; l < page; l++)
+    {
+        for (unsigned int i = 0; i < pages_of_structures[l].size(); i++)
+            if (best_bond == 0 || (pages_of_avg_bonds[l][i] > best_bond/2 && pages_of_avg_bonds[l][i] < 2*best_bond))
+            {
+                if (pages_of_ind_conf[l][i] > max_confidence)
+                {
+                    max_confidence = pages_of_ind_conf[l][i];
+                    l_index = l;
+                    i_index = i;
+                }
+
+                if (output_format != "mol" && !is_reaction)
+                {
+                    out_stream << pages_of_structures[l][i];
+                    output_smile = pages_of_structures[l][i];
+
+                    // Dump this structure into a separate file:
+                    if (!output_image_file_prefix.empty())
+                    {
+                        std::ostringstream fname;
+                        fname << output_image_file_prefix << image_count << ".png";
+                        image_count++;
+                        if (fname.str() != "")
+                        {
+                            Image tmp = pages_of_images[l][i];
+                            if (resize != "")
+                            {
+                                tmp.scale(resize);
+                            }
+                            tmp.write(fname.str());
+                        }
+                    }
+                }
+            }
+        if (is_reaction && !arrows[l].empty())
+        {
+            std::vector<std::string> reactions;
+            std::vector<box_t> rbox;
+            arrange_reactions(arrows[l], pages_of_boxes[l], pluses[l], reactions, rbox, pages_of_structures[l],output_format);
+            for (int k=0; k<reactions.size(); k++)
+            {
+                out_stream << reactions[k] << std::endl;
+
+                if (!output_image_file_prefix.empty())
+                {
+                    std::ostringstream fname;
+                    fname << output_image_file_prefix << image_count << ".png";
+                    image_count++;
+                    if (fname.str() != "")
+                    {
+                        Image tmp = pages_of_images[l][k];
+                        Geometry geometry = Geometry(rbox[k].x2 - rbox[k].x1, rbox[k].y2 - rbox[k].y1, rbox[k].x1, rbox[k].y1);
+                        tmp.crop(geometry);
+                        if (resize != "")
+                        {
+                            tmp.scale(resize);
+                        }
+                        tmp.write(fname.str());
+                    }
+                }
+            }
+        }
+    }
+    // Output the structure with maximum confidence value:
+    if (output_format == "mol")
+    {
+        out_stream << pages_of_structures[l_index][i_index];
+        if (!output_image_file_prefix.empty())
+        {
+            std::ostringstream fname;
+            fname << output_image_file_prefix  << ".png";
+            if (fname.str() != "")
+            {
+                Image tmp = pages_of_images[l_index][i_index];
+                if (resize != "")
+                {
+                    tmp.scale(resize);
+                }
+                tmp.write(fname.str());
+            }
+        }
+    }
+
+    out_stream.flush();
+
+    if (from_file != true){
+        if (!output_file.empty())
+            outfile.close();
+    }
+
+    return output_smile;
+}
+
+
 std::vector<std::string> hack_osra_process_image(
   std::vector<std::map<std::string, std::string> > list_of_rgroup_maps,
   const std::string &input_file,

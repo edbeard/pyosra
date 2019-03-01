@@ -74,6 +74,37 @@ int osra_process_image(
 // Instatiate and populate map and vector
 std::vector<std::map<std::string, std::string> > initialize_rgroup();
 
+/// Function for reading a single OSRA diagram
+std::string read_diagram(
+        const std::string &input_file = "/home/edward/cpp/hack_osra/src/test_rgroup.jpg",
+        const char *image_data = "a",
+        int image_length = 4,
+        const std::string &output_file = "/home/edward/cpp/hack_osra/src/output",
+        int rotate = 0,
+        bool invert = false,
+        int input_resolution = 0,
+        double threshold = 0,
+        int do_unpaper = 0,
+        bool jaggy = false,
+        bool adaptive_option = false,
+        std::string output_format = "smi",
+        std::string embedded_format = "",
+        bool show_confidence = false,
+        bool show_resolution_guess = false,
+        bool show_page = false,
+        bool show_coordinates = false,
+        bool show_avg_bond_length = false,
+        bool show_learning = false,
+        const std::string &osra_dir = "/usr/local/bin",
+        const std::string &spelling_file = "",
+        const std::string &superatom_file = "",
+        bool debug = false,
+        bool verbose = true,
+        const std::string &output_image_file_prefix = "",
+        const std::string &resize = "",
+        const std::string &preview = ""
+);
+
 
 std::vector<std::string> hack_osra_process_image(
   std::vector<std::map<std::string, std::string> > list_of_rgroup_maps,
