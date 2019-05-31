@@ -1,0 +1,11 @@
+src/*.o
+Makefile
+.md5
+cmake-build-debug
+CMakeLists.txt
+config.log
+config.status
+Makefile.inc
+osra_lib_failing.cpp
+pom.xml
+
