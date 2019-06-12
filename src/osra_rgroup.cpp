@@ -9,24 +9,24 @@
 
 namespace py = pybind11;
 
-int main()
-{
-    std::cout << "file run" << std::endl;
-    std::cout << distance(3, 3,3,4) << std::endl;
-
-   
-    const std::string input = "/home/edward/cpp/hack_osra/src/test_rgroup.jpg";
-    const std::string output = "/home/edward/cpp/hack_osra/src/output";
-
-    std::vector<std::string> var_vec{"R"};
-    std::vector<std::string> val_vec{"CH3"};
-    std::vector<std::map<std::string, std::string> > dummy_input;
-
-   // int smiles = hack_osra_process_image(dummy_input);
-    //std::cout << smiles << std::endl;
-
-    return 0;
-}
+//int main()
+//{
+////    std::cout << "file run" << std::endl;
+////    std::cout << distance(3, 3,3,4) << std::endl;
+////
+////
+////    const std::string input = "/home/edward/cpp/hack_osra/src/test_rgroup.jpg";
+////    const std::string output = "/home/edward/cpp/hack_osra/src/output";
+////
+////    std::vector<std::string> var_vec{"R"};
+////    std::vector<std::string> val_vec{"CH3"};
+////    std::vector<std::map<std::string, std::string> > dummy_input;
+//
+//   // int smiles = hack_osra_process_image(dummy_input);
+//    //std::cout << smiles << std::endl;
+//
+//    return 0;
+//}
 
 PYBIND11_MODULE(osra_rgroup, m){
 
