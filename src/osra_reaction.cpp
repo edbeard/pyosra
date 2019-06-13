@@ -53,13 +53,13 @@ string convert_page_to_reaction(const vector<string> &page_of_structures, const 
     OBReaction react;
     for (int j=0; j<reactants.size(); j++)
     {
-        std::tr1::shared_ptr<OBMol> reactant(new OBMol);
+        shared_ptr<OBMol> reactant(new OBMol);
         conv->ReadString(reactant.get(), page_of_structures[reactants[j]]);
         react.AddReactant(reactant);
     }
     for (int j=0; j<products.size(); j++)
     {
-        std::tr1::shared_ptr<OBMol> product(new OBMol);
+        shared_ptr<OBMol> product(new OBMol);
         conv->ReadString(product.get(), page_of_structures[products[j]]);
         react.AddProduct(product);
     }
