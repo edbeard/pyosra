@@ -32,7 +32,7 @@ PYBIND11_MODULE(osra_rgroup, m){
 
     m.doc() = "pybind test example";
     // Function for resolving R-groups
-    m.def("hack_osra_process_image", &hack_osra_process_image, "Hack of OSRA to create smiles for input and output",
+    m.def("read_rgroup", &read_rgroup, "Extension of OSRA to resolve generic chemical diagrams (employed by Chemical Schematic Diagram Extractor)",
     py::arg("list_of_rgroup_maps"),
     py::arg("input_file"),
     py::arg("image_data") = "a",
@@ -64,7 +64,7 @@ PYBIND11_MODULE(osra_rgroup, m){
     );
 
     // Function for directly resolving images
-    m.def("read_diagram", &read_diagram, "Python export for resolving chemical diagrams",
+    m.def("read_diagram", &read_diagram, "Python wrapper of OSRA for resolving chemical diagrams",
     py::arg("input_file"),
     py::arg("image_data") = "a",
     py::arg("image_length") = 4,

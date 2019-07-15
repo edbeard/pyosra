@@ -2252,7 +2252,22 @@ if (from_file == true){
         // Instatiate and populate map and vector
 
         std::vector<std::string> rgroup_vars;
+        rgroup_vars.push_back("X");
+        rgroup_vars.push_back("Y");
+        rgroup_vars.push_back("Z");
         rgroup_vars.push_back("R");
+        rgroup_vars.push_back("R1");
+        rgroup_vars.push_back("R2");
+       rgroup_vars.push_back("R3");
+        rgroup_vars.push_back("R4");
+        rgroup_vars.push_back("R5");
+        rgroup_vars.push_back("R6");
+       rgroup_vars.push_back("R7");
+        rgroup_vars.push_back("R8");
+        rgroup_vars.push_back("R9");
+        rgroup_vars.push_back("R10");
+        rgroup_vars.push_back("Y2");
+        rgroup_vars.push_back("D");
 
         for (int q = 0; q < list_of_rgroup_maps.size(); q++) {
 
