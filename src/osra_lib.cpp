@@ -1969,7 +1969,7 @@ std::string read_diagram(
 }
 
 
-std::vector<std::string> hack_osra_process_image(
+std::vector<std::string> read_rgroup(
   std::vector<std::map<std::string, std::string> > list_of_rgroup_maps,
   const std::string &input_file,
   const char *image_data,
@@ -2150,6 +2150,30 @@ if (from_file == true){
   std::vector<std::vector<std::vector<box_t> > > array_of_boxes_page(
       page, std::vector<std::vector<box_t> >(num_resolutions));
 
+    // Instantiate and populate map and vector
+
+    std::vector<std::string> rgroup_vars;
+    rgroup_vars.push_back("R");
+    rgroup_vars.push_back("X");
+    rgroup_vars.push_back("Y");
+    rgroup_vars.push_back("Z");
+    rgroup_vars.push_back("R1");
+    rgroup_vars.push_back("R2");
+    rgroup_vars.push_back("R3");
+    rgroup_vars.push_back("R4");
+    rgroup_vars.push_back("R5");
+    rgroup_vars.push_back("R6");
+    rgroup_vars.push_back("R7");
+    rgroup_vars.push_back("R8");
+    rgroup_vars.push_back("R9");
+    rgroup_vars.push_back("R10");
+    rgroup_vars.push_back("Y2");
+    rgroup_vars.push_back("D");
+    rgroup_vars.push_back("R'");
+    rgroup_vars.push_back("R''");
+    rgroup_vars.push_back("R'''");
+    rgroup_vars.push_back("R''''");
+
 //#pragma omp parallel for default(shared) private(OCR_JOB,JOB)
   for (int l = 0; l < page; l++)
     {
@@ -2249,25 +2273,9 @@ if (from_file == true){
         std::cout << "Number of boxes: " << boxes.size() << '.' << std::endl;
 
 
-        // Instatiate and populate map and vector
+        // For use in R-group OCR
+        std::string rgroup_vars_string = "XYZRR1R2R3R4R5R6R7R8R9R10Y2DR'R''R'''R''''";
 
-        std::vector<std::string> rgroup_vars;
-        rgroup_vars.push_back("X");
-        rgroup_vars.push_back("Y");
-        rgroup_vars.push_back("Z");
-        rgroup_vars.push_back("R");
-        rgroup_vars.push_back("R1");
-        rgroup_vars.push_back("R2");
-       rgroup_vars.push_back("R3");
-        rgroup_vars.push_back("R4");
-        rgroup_vars.push_back("R5");
-        rgroup_vars.push_back("R6");
-       rgroup_vars.push_back("R7");
-        rgroup_vars.push_back("R8");
-        rgroup_vars.push_back("R9");
-        rgroup_vars.push_back("R10");
-        rgroup_vars.push_back("Y2");
-        rgroup_vars.push_back("D");
 
         for (int q = 0; q < list_of_rgroup_maps.size(); q++) {
 
@@ -2346,7 +2354,7 @@ if (from_file == true){
                         n_letters = find_chars_rgroup(p, orig_box, letters, atom, bond, n_atom, n_bond, height, width,
                                                       bgColor,
                                                       THRESHOLD_BOND, max_font_width, max_font_height, real_font_width,
-                                                      real_font_height, verbose, "RX");
+                                                      real_font_height, verbose, rgroup_vars_string);
                         if (verbose)
                             std::cout << "Number of atoms: " << n_atom << ", bonds: " << n_bond << ", " << n_letters
                                       << " letters: " << n_letters << " " << letters << " after find_atoms()"
@@ -2483,7 +2491,6 @@ if (from_file == true){
                         int recognized_chars = count_recognized_chars(atom, bond);
 
                         std::map<std::string, std::string> current_rgroup = list_of_rgroup_maps[q];
-                        std::cout << "Current R-Group R value : " << current_rgroup["R"] << std::endl;
 
                         for (int m = 0; m < n_atom; m++) {
 //                      std::cout << "This atom is: " << atom[m] << std::endl;
@@ -2491,11 +2498,12 @@ if (from_file == true){
                             for (int z = 0; z < rgroup_vars.size(); z++) {
 
 
-                                if (atom[m].label == rgroup_vars[z]) {
+                                if ((atom[m].label == rgroup_vars[z]) && (current_rgroup.count(rgroup_vars[z]) == 1 )){
                                     std::cout << "Previous Atom was " << atom[m] << std::endl;
 
                                     atom[m].label = current_rgroup[rgroup_vars[z]];
                                     std::cout << " Atom updated to " << atom[m] << std::endl;
+                                    break;
                                 }
 
                             }

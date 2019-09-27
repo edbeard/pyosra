@@ -934,6 +934,11 @@ const std::string get_formatted_structure(
   if (verbose)
     std::cout << "Structure length: " << strstr.str().length() << ", molecule fragments: " << molecule_statistics.fragments << '.' << std::endl;
 
+//    std::cout << "Atoms after getting the formatted structure..." << std::endl;
+//    for (int i = 0; i < atom.size(); i++) {
+//        std::cout << "Atom " << i << "value: " << atom[i] << std::endl;
+//    }
+
   return (strstr.str());
 }
 

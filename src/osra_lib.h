@@ -106,7 +106,7 @@ std::string read_diagram(
 );
 
 
-std::vector<std::string> hack_osra_process_image(
+std::vector<std::string> read_rgroup(
   std::vector<std::map<std::string, std::string> > list_of_rgroup_maps,
   const std::string &input_file = "/home/edward/cpp/hack_osra/src/test_rgroup.jpg",
   const char *image_data = "a",
