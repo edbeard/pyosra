@@ -131,7 +131,7 @@ std::vector<std::string> read_rgroup(
   const std::string &spelling_file = "",
   const std::string &superatom_file = "",
   bool debug = false,
-  bool verbose = true,
+  bool verbose = false,
   const std::string &output_image_file_prefix = "",
   const std::string &resize = "",
   const std::string &preview = ""
