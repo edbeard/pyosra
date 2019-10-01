@@ -76,10 +76,10 @@ std::vector<std::map<std::string, std::string> > initialize_rgroup();
 
 /// Function for reading a single OSRA diagram
 std::string read_diagram(
-        const std::string &input_file = "/home/edward/cpp/hack_osra/src/test_rgroup.jpg",
+        const std::string &input_file,
         const char *image_data = "a",
         int image_length = 4,
-        const std::string &output_file = "/home/edward/cpp/hack_osra/src/output",
+        const std::string &output_file = "/tmp",
         int rotate = 0,
         bool invert = false,
         int input_resolution = 0,
@@ -99,7 +99,7 @@ std::string read_diagram(
         const std::string &spelling_file = "",
         const std::string &superatom_file = "",
         bool debug = false,
-        bool verbose = true,
+        bool verbose = false,
         const std::string &output_image_file_prefix = "",
         const std::string &resize = "",
         const std::string &preview = ""
@@ -108,10 +108,10 @@ std::string read_diagram(
 
 std::vector<std::string> read_rgroup(
   std::vector<std::map<std::string, std::string> > list_of_rgroup_maps,
-  const std::string &input_file = "/home/edward/cpp/hack_osra/src/test_rgroup.jpg",
+  const std::string &input_file,
   const char *image_data = "a",
   int image_length = 4,
-  const std::string &output_file = "/home/edward/cpp/hack_osra/src/output",
+  const std::string &output_file = "/tmp",
   int rotate = 0,
   bool invert = false,
   int input_resolution = 0,
