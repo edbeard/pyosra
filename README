@@ -1,3 +1,15 @@
+                        Pyosra: A python wrapper for OSRA
+
+                            Edward Beard, 2019
+                            ed.beard94@gmail.com
+
+Description:
+
+Additional logic added to OSRA that enables:
+1) Import of OSRA functionality to Python
+2) Resolution of basic R-Group structures
+
+
                         OSRA: Optical Structure Recognition Application
 
 							Igor Filippov, 2007-2016
