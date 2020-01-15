@@ -83,7 +83,7 @@ int main(int argc,char **argv)
       return 1;
     }
 
-  std::cout << total <<" "<< identical << " " << double(identical) / total << " " << double(identical) / computed << std::endl;
+  // std::cout << total <<" "<< identical << " " << double(identical) / total << " " << double(identical) / computed << std::endl;
 
   return(0);
 }

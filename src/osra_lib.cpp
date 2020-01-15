@@ -1747,14 +1747,13 @@ std::string read_diagram(
                         int bond_max_type = 0;
                         int real_bonds = count_bonds(bond, n_bond, bond_max_type);
 
-                        if (verbose)
+                        if (verbose) {
                             std::cout << "Final number of atoms: " << real_atoms << ", bonds: " << real_bonds
                                       << ", chars: " << n_letters << '.' << std::endl;
 
-                        std::cout << "Raw extracted atoms:  " << atom.size() << std::endl;
-                        std::cout << "No of atoms:  " << n_atom << std::endl;
-                        //std::cout << "All bonds:  " << bond << std::endl;
-
+                            std::cout << "Raw extracted atoms:  " << atom.size() << std::endl;
+                            std::cout << "No of atoms:  " << n_atom << std::endl;
+                        }
 
                         // std::cout << "No of bonds:  " << n_atom << std::endl;
 //                  std::cout << "superatoms:  " << std::endl;
@@ -1888,7 +1887,6 @@ std::string read_diagram(
 
                 if (output_format != "mol" && !is_reaction)
                 {
-                    out_stream << pages_of_structures[l][i];
                     output_smile = pages_of_structures[l][i];
 
                     // Dump this structure into a separate file:
@@ -2001,16 +1999,7 @@ std::vector<std::string> read_rgroup(
 )
 {
 bool from_file = false;
-//char image_data = 'a';
-//int image_length = 4;
 int global_init_state;
-
-//list_of_rgroup_maps = initialize_rgroup();
-
-
-//if (from_file == true){
-//  if (global_init_state != 0) return global_init_state;
-//}
 
   std::transform(output_format.begin(), output_format.end(), output_format.begin(), ::tolower);
   std::transform(embedded_format.begin(), embedded_format.end(), embedded_format.begin(), ::tolower);
@@ -2493,27 +2482,24 @@ if (from_file == true){
                         std::map<std::string, std::string> current_rgroup = list_of_rgroup_maps[q];
 
                         for (int m = 0; m < n_atom; m++) {
-//                      std::cout << "This atom is: " << atom[m] << std::endl;
-//                      std::cout << "This atom's label is: " << atom[m].label << std::endl;
                             for (int z = 0; z < rgroup_vars.size(); z++) {
 
 
                                 if ((atom[m].label == rgroup_vars[z]) && (current_rgroup.count(rgroup_vars[z]) == 1 )){
-                                    std::cout << "Previous Atom was " << atom[m] << std::endl;
+                                    if (verbose)
+                                        std::cout << "Previous Atom was " << atom[m] << std::endl;
 
                                     atom[m].label = current_rgroup[rgroup_vars[z]];
-                                    std::cout << " Atom updated to " << atom[m] << std::endl;
+
+                                    if (verbose)
+                                        std::cout << "Atom updated to " << atom[m] << std::endl;
+
                                     break;
                                 }
 
                             }
 
-//                      if(atom[m].label == "R"){
-//                          std::cout << "Previous Atom was " << atom[m] << std::endl;
-//
-//                          atom[m].label = "CH3";
-//                          std::cout << " Atom updated to " << atom[m] << std::endl;
-//                      }
+
                         }
 
                         assign_charge(atom, bond, n_atom, n_bond, spelling, superatom, debug);
@@ -2522,24 +2508,12 @@ if (from_file == true){
                         int bond_max_type = 0;
                         int real_bonds = count_bonds(bond, n_bond, bond_max_type);
 
-                        if (verbose)
+                        if (verbose) {
                             std::cout << "Final number of atoms: " << real_atoms << ", bonds: " << real_bonds
                                       << ", chars: " << n_letters << '.' << std::endl;
-
-                        std::cout << "Raw extracted atoms:  " << atom.size() << std::endl;
-                        std::cout << "No of atoms:  " << n_atom << std::endl;
-                        //std::cout << "All bonds:  " << bond << std::endl;
-
-
-                        // std::cout << "No of bonds:  " << n_atom << std::endl;
-//                  std::cout << "superatoms:  " << std::endl;
-//                  for(std::map<string, pair<string,string> >::const_iterator it = superatom.begin();
-//                          it != superatom.end(); ++it)
-//                  {
-//                      std::cout << it->first << " " << it->second.first << " " << it->second.second << "\n";
-//                  }
-                        //std::cout << "Real atoms:  " << n_atom << std::endl;
-
+                            std::cout << "Raw extracted atoms:  " << atom.size() << std::endl;
+                            std::cout << "No of atoms:  " << n_atom << std::endl;
+                        }
 
                         split_fragments_and_assemble_structure_record(atom, n_atom, bond, n_bond, boxes,
                                                                       l, k, resolution, res_iter,
@@ -2664,10 +2638,10 @@ std::vector<std::string> output_smiles;
 
 	    if (output_format != "mol" && !is_reaction)
 	      {
-		out_stream << pages_of_structures[l][i];
+
 		output_smiles.push_back(pages_of_structures[l][i]);
 
-		// Dump this structure into a separate file:
+              // Dump this structure into a separate file:
 		if (!output_image_file_prefix.empty())
 		  {
                     std::ostringstream fname;
@@ -2741,20 +2715,5 @@ if (from_file != true){
     outfile.close();
 }
 
-  return output_smiles;
-}
-
-void test_osra_lib(const std::string &output, int pointless)
-{
-  using namespace std;
-
-  std::cout << output << std::endl;
-
-#ifdef OSRA_LIB
-  std::cout << "osra lib found" << endl;
-#else
-  std::cout << "osra lib NOT found" << endl;
-#endif
-
-  return;
+    return output_smiles;
 }
